@@ -99,8 +99,9 @@ def emit_metadata(
             "the arg cast_to_str=True to str() wrap all keys and value."
         )
 
+    # noinspection PyTypeChecker
     custom_properties = (
-        sorted(_metadata.items(), key=lambda x: x[0]) if sort else _metadata
+        dict(sorted(_metadata.items(), key=lambda x: x[0])) if sort else _metadata
     )
 
     metadata_event = MetadataChangeProposalWrapper(
