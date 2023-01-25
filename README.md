@@ -31,6 +31,7 @@ entities: List[DHEntity] = get_datahub_entities(limit=5)
 
 _Take the first entity and apply some changes_
 ```python
+from datahub_tools.client import update_description, emit_metadata
 entity = entities[0]
 
 # update the table's description
@@ -88,3 +89,7 @@ pre-commit install
 ```
 
 The pre-commit hooks will run automatically upon a commit
+
+### Contact/Author
+
+Written by [Ada Draginda](https://www.linkedin.com/in/adadraginda/) <ada[at]makenotion.com>
