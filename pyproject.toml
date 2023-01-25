@@ -1,0 +1,59 @@
+[build-system]
+requires = ['setuptools']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'datahub_tools'
+description = 'Python tools for working with DataHub'
+version = '0.1.0'
+readme = 'README.md'
+requires-python = '>=3.7'
+dependencies = [
+    'acryl-datahub',
+    'jmespath',
+    'requests'
+]
+
+[tool.setuptools]
+include-package-data = false
+package-dir = {"" = "src"}
+
+[tool.isort]
+profile = 'black'
+line_length = 110
+
+[tool.black]
+target-version = ['py37']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.tox]
+legacy_tox_ini = '''
+[tox]
+envlist = py37,py38,py39,py310,py311
+isolated_build = True
+
+[gh-actions]
+python =
+    3.7: py37
+    3.8: py38
+    3.9: py39
+    3.10: py310
+    3.11: py311
+
+[testenv]
+deps = pytest
+commands = pytest
+'''
