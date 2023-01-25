@@ -21,7 +21,7 @@ TECHNICAL_OWNER = "TECHNICAL_OWNER"
 def _wrapped_getenv(token) -> str:
     out = os.getenv(token)
     if not out:
-        raise ValueError(f'missing environment variable {token}')
+        raise ValueError(f"missing environment variable {token}")
     return out
 
 
@@ -70,7 +70,10 @@ def get_dh_emitter():
 
 
 def emit_metadata(
-    metadata: Dict[str, str], resource_urn: str, cast_to_str: bool = False, sort: bool = True
+    metadata: Dict[str, str],
+    resource_urn: str,
+    cast_to_str: bool = False,
+    sort: bool = True,
 ):
     """
     Using the DataHub emitter included in its package, emit metadata for a given resource/entity.
@@ -96,7 +99,9 @@ def emit_metadata(
             "the arg cast_to_str=True to str() wrap all keys and value."
         )
 
-    custom_properties = sorted(_metadata.items(), key=lambda x: x[0]) if sort else _metadata
+    custom_properties = (
+        sorted(_metadata.items(), key=lambda x: x[0]) if sort else _metadata
+    )
 
     metadata_event = MetadataChangeProposalWrapper(
         entityType="dataset",
@@ -117,7 +122,8 @@ def get_datahub_entities(start: int = 0, limit: int = 10000) -> List[DHEntity]:
       e.g. urn:li:dataset:(urn:li:dataPlatform:snowflake,prep.core.calendar,PROD)
     """
     # reuse the same set of vars for fields (editable and non-editable fields)
-    field_vars = dedent("""
+    field_vars = dedent(
+        """
         fieldPath
         description
         tags {
@@ -144,10 +150,12 @@ def get_datahub_entities(start: int = 0, limit: int = 10000) -> List[DHEntity]:
             }
           }
         }
-    """)
+    """
+    )
 
-    query_body = Template(dedent(
-        """{
+    query_body = Template(
+        dedent(
+            """{
           search(input: {type: DATASET, query: "*", start:$start, count: $limit})
           {
             start
@@ -207,7 +215,8 @@ def get_datahub_entities(start: int = 0, limit: int = 10000) -> List[DHEntity]:
             }
           }
         }"""
-    )).substitute(field_vars=field_vars, start=start, limit=max(limit, 10000))
+        )
+    ).substitute(field_vars=field_vars, start=start, limit=max(limit, 10000))
 
     body = {"query": query_body, "variables": {}}
     dh_entities = datahub_post(body=body)["data"]["search"]["searchResults"]

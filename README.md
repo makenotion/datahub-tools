@@ -1,13 +1,13 @@
 # DataHub-Tools
 
-A python quasi-client (and tools) that interacts with DataHub GraphQL endpoints. 
+A python quasi-client (and tools) that interacts with DataHub GraphQL endpoints.
 
 ## Install
 
 Requires python >=3.7
 
 ```bash
-pip install https://github.com/makenotion/datahub-tools 
+pip install https://github.com/makenotion/datahub-tools
 ```
 
 Three environment variables are required:
@@ -56,7 +56,7 @@ This package was not created with the intent of open-sourcing (rather just for i
 it does not contain wrappers around everything endpoint. There is a lot missing before reaching feature parity
 but hopefully still helpful.
 
-The goals of the functions were to provide simple and easy programmatic access to common DataHub operations 
+The goals of the functions were to provide simple and easy programmatic access to common DataHub operations
 
 #### Features
 * emit metadata
@@ -70,7 +70,7 @@ Users are encouraged to setup logging in advance as many steps and communication
 
 ## Development/Contributing
 
-Contributions are welcome, but please add tests for new code. Testing is setup using pytest and orchestrated 
+Contributions are welcome, but please add tests for new code. Testing is setup using pytest and orchestrated
 with tox:
 
 ```bash

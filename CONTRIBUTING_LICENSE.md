@@ -46,14 +46,14 @@ You accept and agree to the following terms and conditions for Your present and 
 
 8.  It is Your responsibility to notify Notion when any change is required to the list of designated employees authorized to submit Contributions on behalf of the Corporation, or to the Corporation's Point of Contact with Notion.
 
-**Corporation** 
+**Corporation**
 
 - Name:
 - Address:
 - Country:
 - Phone Number:
 
-**Primary Point of Contact** 
+**Primary Point of Contact**
 
 - Full Name:
 - Title:

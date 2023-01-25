@@ -87,7 +87,7 @@ class DHEntity(DH):
         logger.info("attempting to delete %s (%s)", self.name, self.urn)
         args = ["datahub", "delete", "--urn", self.urn, "--hard"]
         if force:
-            args.append('-f')
+            args.append("-f")
         logger.info("sending command: %s", " ".join(args))
         output = subprocess.run(args=args, input="y\n", text=True)
         logger.info("Done: datahub return code %d", output.returncode)
