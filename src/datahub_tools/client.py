@@ -280,6 +280,13 @@ def _clean_string(_str: str) -> str:
 def update_field_descriptions(
     resource_urn: str, field_descriptions: Dict[str, str]
 ) -> Dict[str, str]:
+    """
+    Update the editable schema field description for one or more fields within a dataset
+    :param resource_urn: The URN for the related dataset/resource
+    :param field_descriptions: A dictionary where the key-value pairs are the flattened fieldPath (name)
+      for the column and the description.
+    :return: Resource URN changed
+    """
     fields = [
         f'{{ fieldPath: "{k}", description: "{_clean_string(v)}" }}'
         for k, v in field_descriptions.items()
@@ -296,7 +303,13 @@ def update_field_descriptions(
     return response[endpoint]
 
 
-def update_dataset_description(resource_urn: str, description: str):
+def update_dataset_description(resource_urn: str, description: str) -> Dict[str, str]:
+    """
+    Update the editable description for a given dataset/resource
+    :param resource_urn: The URN for the related dataset/resource
+    :param description: The description that you want to set for the dataset/resource
+    :return: Resource URN changed
+    """
     _input = (
         f'{{ editableProperties: {{ description: "{_clean_string(description)}" }} }}'
     )
