@@ -3,6 +3,8 @@ from __future__ import annotations
 import functools
 import logging
 import os
+import re
+import warnings
 from string import Template
 from textwrap import dedent
 from typing import Dict, Iterable, List
@@ -268,6 +270,88 @@ def get_datahub_groups() -> List[Dict[str, str]]:
     return datahub_post(body=body)["data"]["listGroups"]["groups"]
 
 
+def _clean_string(_str: str) -> str:
+    """
+    convenience method to escape quotes within a string
+    """
+    return re.sub(r'\\*"', '\\"', _str)
+
+
+def update_field_descriptions(
+    resource_urn: str, field_descriptions: Dict[str, str]
+) -> Dict[str, str]:
+    """
+    Update the editable schema field description for one or more fields within a dataset
+    :param resource_urn: The URN for the related dataset/resource
+    :param field_descriptions: A dictionary where the key-value pairs are the flattened fieldPath (name)
+      for the column and the description.
+    :return: Resource URN changed
+    """
+    fields = [
+        f'{{ fieldPath: "{k}", description: "{_clean_string(v)}" }}'
+        for k, v in field_descriptions.items()
+    ]
+    _input = f"{{ editableSchemaMetadata: {{ editableSchemaFieldInfo: [ {','.join(fields)} ] }} }}"
+    endpoint = "updateDataset"
+    response = _post_mutation(
+        endpoint=endpoint, _input=_input, urn=resource_urn, subselection="urn"
+    )
+    if not response:
+        raise ValueError(
+            f"Failed to update field descriptions (but returned 200) for {resource_urn}"
+        )
+    return response[endpoint]
+
+
+def update_dataset_description(resource_urn: str, description: str) -> Dict[str, str]:
+    """
+    Update the editable description for a given dataset/resource
+    :param resource_urn: The URN for the related dataset/resource
+    :param description: The description that you want to set for the dataset/resource
+    :return: Resource URN changed
+    """
+    _input = (
+        f'{{ editableProperties: {{ description: "{_clean_string(description)}" }} }}'
+    )
+    endpoint = "updateDataset"
+    response = _post_mutation(
+        endpoint=endpoint, _input=_input, urn=resource_urn, subselection="urn"
+    )
+    if not response:
+        raise ValueError(
+            f"Failed to update entity descriptions (but returned 200) for {resource_urn}"
+        )
+    return response[endpoint]
+
+
+def update_institutional_memory(
+    resource_urn: str, url: str, description: str, author_urn: str, created_at: int
+):
+    """
+    An institutional memory to add to a Metadata Entity
+    :param resource_urn: URN of the resource/entity that you're trying to set
+    :param url: Link to a document or wiki page or another internal resource
+    :param description: Description of the resource
+    :param author_urn: The corp user urn of the author of the metadata
+    :param created_at: The time at which this metadata was created
+    :return:
+    """
+    element = (
+        f'{{ url: "{url}", description: "{_clean_string(description)}", '
+        f'author: "{author_urn}", createdAt: {created_at} }}'
+    )
+    _input = f"{{ institutionalMemory: {{ elements: [{element}] }} }}"
+    endpoint = "updateDataset"
+    response = _post_mutation(
+        endpoint=endpoint, _input=_input, urn=resource_urn, subselection="urn"
+    )
+    if not response:
+        raise ValueError(
+            f"Failed to update institutional memory (but returned 200) for {resource_urn}"
+        )
+    return response[endpoint]
+
+
 def update_description(
     resource_urn: str, description: str, column: str | None = None
 ) -> bool:
@@ -278,6 +362,11 @@ def update_description(
       description will be applied to this column (field).
     :return:
     """
+    warnings.warn(
+        "update_description is deprecated and will be removed in the next release, "
+        "please use update_field_descriptions or update_dataset_description.",
+        DeprecationWarning,
+    )
     subresource = (
         f', subResourceType: DATASET_FIELD, subResource: "{column}"' if column else ""
     )
@@ -310,14 +399,8 @@ def set_user_owner(
 
 def _set_owner(owner: str, urns: List[str]):
     resource_urns = ", ".join([f'{{ resourceUrn: "{urn}" }}' for urn in urns])
-    body = {
-        "query": (
-            "mutation batchAddOwners { batchAddOwners(input: "
-            f"{{ owners: [ {owner} ], resources: [ {resource_urns} ] }}) }}"
-        ),
-        "variables": {},
-    }
-    response = datahub_post(body=body)
+    _input = f"{{ owners: [ {owner} ], resources: [ {resource_urns} ] }}"
+    response = _post_mutation(endpoint="batchAddOwners", _input=_input)
     if not response:
         raise ValueError(f"Setting table owners for {owner} failed! (but returned 200)")
 
@@ -327,14 +410,8 @@ def remove_owners(owners: Iterable[str], urns: List[str]):
         owners = [owners]
     owner_urns = ", ".join(owners)
     resource_urns = ", ".join([f'{{ resourceUrn: "{urn}" }}' for urn in urns])
-    body = {
-        "query": (
-            "mutation batchRemoveOwners { batchRemoveOwners(input: "
-            f"{{ ownerUrns: [ {owner_urns} ], resources: [ {resource_urns} ] }}) }}"
-        ),
-        "variables": {},
-    }
-    response = datahub_post(body=body)
+    _input = f"{{ ownerUrns: [ {owner_urns} ], resources: [ {resource_urns} ] }}"
+    response = _post_mutation(endpoint="batchRemoveOwners", _input=_input)
     if not response:
         raise ValueError(
             f"Removing table owners ({owners}) for {urns} failed! (but returned 200)"
@@ -342,16 +419,18 @@ def remove_owners(owners: Iterable[str], urns: List[str]):
 
 
 def set_tags(tag_urns: Iterable[str], resource_urns: Iterable[str]):
-    _change_tags(command="batchAddTags", tag_urns=tag_urns, resource_urns=resource_urns)
+    _change_tags(
+        endpoint="batchAddTags", tag_urns=tag_urns, resource_urns=resource_urns
+    )
 
 
 def remove_tags(tag_urns: Iterable[str], resource_urns: Iterable[str]):
     _change_tags(
-        command="batchRemoveTags", tag_urns=tag_urns, resource_urns=resource_urns
+        endpoint="batchRemoveTags", tag_urns=tag_urns, resource_urns=resource_urns
     )
 
 
-def _change_tags(command: str, tag_urns: Iterable[str], resource_urns: Iterable[str]):
+def _change_tags(endpoint: str, tag_urns: Iterable[str], resource_urns: Iterable[str]):
     if isinstance(tag_urns, str):
         tag_urns = [tag_urns]
     _tags = ", ".join(f'"{t}"' for t in tag_urns)
@@ -359,16 +438,23 @@ def _change_tags(command: str, tag_urns: Iterable[str], resource_urns: Iterable[
     if isinstance(resource_urns, str):
         resource_urns = [resource_urns]
     _res = ", ".join([f'{{ resourceUrn: "{urn}" }}' for urn in resource_urns])
+    _input = f"{{ tagUrns: [ {_tags} ], resources: [ {_res} ] }}"
 
+    response = _post_mutation(endpoint=endpoint, _input=_input)
+    if not response:
+        raise ValueError(
+            f"{endpoint} {tag_urns} for {resource_urns} failed! (but returned 200)"
+        )
+
+
+def _post_mutation(
+    endpoint: str, _input: str, urn: str | None = None, subselection: str | None = None
+) -> Dict | None:
+    _urn = f'urn: "{urn}", ' if urn else ""
+    _subselection = f" {{ {subselection} }}" if subselection else ""
     body = {
-        "query": (
-            f"mutation {command} {{ {command}(input: "
-            f"{{ tagUrns: [ {_tags} ], resources: [ {_res} ] }}) }}"
-        ),
+        "query": f"mutation {endpoint} {{ {endpoint}({_urn}input: {_input}){_subselection} }}",
         "variables": {},
     }
     response = datahub_post(body=body)
-    if not response:
-        raise ValueError(
-            f"{command} {tag_urns} for {resource_urns} failed! (but returned 200)"
-        )
+    return response["data"] if response else None
