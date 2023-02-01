@@ -31,20 +31,19 @@ entities: List[DHEntity] = get_datahub_entities(limit=5)
 
 _Take the first entity and apply some changes_
 ```python
-from datahub_tools.client import update_description, emit_metadata
+from datahub_tools.client import update_dataset_description, emit_metadata
 entity = entities[0]
 
 # update the table's description
-update_description(
+update_dataset_description(
     resource_urn=entity.urn,
     description="The new description for this entity"
 )
 
 # update the description for a column within the table
-update_description(
+update_field_descriptions(
     resource_urn=entity.urn,
-    description="A new description for this column",
-    column="my_column"
+    field_descriptions={"my_column": "A new description for this column"}
 )
 
 # set the custom properties
