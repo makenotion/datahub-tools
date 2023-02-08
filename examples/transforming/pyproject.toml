@@ -3,15 +3,16 @@ requires = ['setuptools']
 build-backend = 'setuptools.build_meta'
 
 [project]
-name = 'datahub_tools'
-description = 'Python tools for working with DataHub'
-version = '0.3.0'
+name = 'metadata_transformers'
+description = 'Metadata propagation transformers'
+version = '0.1.0'
 readme = 'README.md'
 requires-python = '>=3.7'
 dependencies = [
-    'acryl-datahub',
+    'acryl-datahub[dbt]',
+    'click',
     'jmespath',
-    'requests'
+    'datahub-tools@git+ssh://git@github.com/makenotion/datahub-tools'
 ]
 
 [tool.setuptools]
@@ -20,10 +21,10 @@ package-dir = {"" = "src"}
 
 [tool.isort]
 profile = 'black'
-line_length = 110
+line_length = 88
 
 [tool.black]
-target-version = ['py37']
+target-version = ['py310']
 include = '\.pyi?$'
 exclude = '''
 /(
@@ -37,23 +38,4 @@ exclude = '''
   | build
   | dist
 )/
-'''
-
-[tool.tox]
-legacy_tox_ini = '''
-[tox]
-envlist = py37,py38,py39,py310,py311
-isolated_build = True
-
-[gh-actions]
-python =
-    3.7: py37
-    3.8: py38
-    3.9: py39
-    3.10: py310
-    3.11: py311
-
-[testenv]
-deps = pytest
-commands = pytest
 '''
