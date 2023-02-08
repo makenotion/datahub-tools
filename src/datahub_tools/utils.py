@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import warnings
 from pathlib import Path
 from typing import Any, Dict, Iterable
 
@@ -15,6 +16,10 @@ def extract_dbt_resources(
     :return: A dictionary containing the snowflake table name (e.g. prep.core.calendar)
       and the associated dbt manifest dict (table metadata).
     """
+    warnings.warn(
+        "deprecated, please use datahub_tools.dbt.extract_dbt_resources",
+        DeprecationWarning,
+    )
     if isinstance(manifest_file, str):
         manifest_file = Path(manifest_file)
     with manifest_file.open() as f:
