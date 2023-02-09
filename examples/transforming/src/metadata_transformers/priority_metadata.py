@@ -31,6 +31,8 @@ class PriorityMetadata:
 
     @classmethod
     def from_resource(cls, resource: dict) -> PriorityMetadata:
+        # note that our metadata is at this path, ['config']['notion_metadata'] but
+        # this path is not a standard entry found in dbt resources.
         metadata = jmespath.search("config.notion_metadata", resource) or {}
         table_name = f"{resource['alias'] or resource['name']}"
         resource_name = f"{resource['database']}.{resource['schema']}.{table_name}"

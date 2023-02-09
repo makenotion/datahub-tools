@@ -9,6 +9,7 @@ from string import Template
 from textwrap import dedent
 from typing import Dict, Iterable, List
 
+import jmespath
 import requests
 from datahub.emitter.mcp import MetadataChangeProposalWrapper
 from datahub.emitter.rest_emitter import DatahubRestEmitter
@@ -231,6 +232,39 @@ def get_datahub_entities(start: int = 0, limit: int = 10000) -> List[DHEntity]:
         out.append(DHEntity.from_dict(_dict=dh_entity["entity"]))
 
     return out
+
+
+def get_owners(resource_urn: str) -> List[Dict[str, str]]:
+    """
+    Find a list of owners for a given resource_urn. Example format of one entry in the
+    output list is{'urn': 'urn:li:corpGroup:my_group_team_name', 'type': 'CORP_GROUP'}
+    :param resource_urn:
+    :return: A list of dictionaries, each an type of owner for the given resource
+    """
+    body = {
+        "query": (
+            Template(
+                """
+            {
+                dataset(urn: "$resource_urn") {
+                    ownership {
+                      owners {
+                        owner {
+                          ... on CorpUser { urn type }
+                          ... on CorpGroup { urn type }
+                        }
+                      }
+                    }
+                  }
+            }
+            """
+            )
+        ).substitute(resource_urn=resource_urn),
+        "variables": {},
+    }
+    response = datahub_post(body=body) or {}
+    raw_owners = jmespath.search("data.dataset.ownership.owners", response) or []
+    return [x["owner"] for x in raw_owners]
 
 
 def get_datahub_users() -> List[Dict[str, str]]:
