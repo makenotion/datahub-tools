@@ -52,7 +52,8 @@ def datahub_post(body: Dict) -> Dict:
 
     graphql_url = get_dh_graphql_url()
     logger = logging.getLogger(__name__)
-    logger.info("posting to %s: %s", graphql_url, body)
+    # the sub just condenses down the body e.g.: 'query: \n       {...' -> 'query: {...'
+    logger.info("posting to %s: %s", graphql_url, re.sub(r"\n+\s*", "", str(body)))
 
     response = requests.post(url=graphql_url, headers=headers, json=body)
     response.raise_for_status()
