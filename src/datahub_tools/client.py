@@ -4,7 +4,6 @@ import functools
 import logging
 import os
 import re
-import warnings
 from string import Template
 from textwrap import dedent
 from typing import Dict, Iterable, List
@@ -53,7 +52,9 @@ def datahub_post(body: Dict) -> Dict:
     graphql_url = get_dh_graphql_url()
     logger = logging.getLogger(__name__)
     # the sub just condenses down the body e.g.: 'query: \n       {...' -> 'query: {...'
-    logger.info("posting to %s: %s", graphql_url, re.sub(r"\n+\s*", "", str(body)))
+    # Note that the extra backslash is needed (\\n+) because body is a dict and calling
+    # str will inject additional escape characters.
+    logger.info("posting to %s: %s", graphql_url, re.sub(r"\\n+\s*", "", str(body)))
 
     response = requests.post(url=graphql_url, headers=headers, json=body)
     response.raise_for_status()
@@ -119,10 +120,16 @@ def emit_metadata(
     emitter.emit(metadata_event)
 
 
-def get_datahub_entities(start: int = 0, limit: int = 10000) -> List[DHEntity]:
+def get_datahub_entities(
+    start: int = 0, limit: int = 10000, with_schema: bool = False
+) -> List[DHEntity]:
     """
     :param start: Index of the first record to return
-    :param limit:  Maximum number of records to return (default and maximum per query is 10000).
+    :param limit: Maximum number of records to return (default and maximum per query
+      is 10000).
+    :param with_schema: If True (default is False) then schema fields and descriptions
+      will be retrieved (warning: may be slow or cause the DataHub endpoint to 503, in
+      which case you will need to retrieve your entities in chunks).
     :return: Dictionary of snowflake name (e.g. prep.core.calendar) to DataHub urn
       e.g. urn:li:dataset:(urn:li:dataPlatform:snowflake,prep.core.calendar,PROD)
     """
@@ -158,28 +165,9 @@ def get_datahub_entities(start: int = 0, limit: int = 10000) -> List[DHEntity]:
     """
     )
 
-    query_body = Template(
-        dedent(
-            """{
-          search(input: {type: DATASET, query: "*", start:$start, count: $limit})
-          {
-            start
-            count
-            searchResults {
-              entity {
-                urn
-                type
-                ...on Dataset {
-                  name
-                  properties {
-                    qualifiedName
-                    description
-                    customProperties {
-                      ...on CustomPropertiesEntry { key value }
-                    }
-                  }
-                  editableProperties { description }
-                  schemaMetadata {
+    schema_query = dedent(
+        """
+                          schemaMetadata {
                     fields {
                       ...on SchemaField {
                         $field_vars
@@ -194,22 +182,50 @@ def get_datahub_entities(start: int = 0, limit: int = 10000) -> List[DHEntity]:
                       }
                     }
                   }
-                  ownership {
-                    owners {
-                      owner {
-                        ...on CorpUser { urn }
-                        ...on CorpGroup { urn }
+        """
+    )
+
+    query_body_template = Template(
+        dedent(
+            """
+            {
+              search(input: {type: DATASET, query: "*", start:$start, count: $limit})
+              {
+                start
+                count
+                searchResults {
+                  entity {
+                    urn
+                    type
+                    ...on Dataset {
+                      name
+                      properties {
+                        qualifiedName
+                        description
+                        customProperties {
+                          ...on CustomPropertiesEntry { key value }
+                        }
                       }
-                      type
-                    }
-                  }
-                  tags {
-                    tags {
-                      tag {
-                        ...on Tag {
-                          urn
-                          properties {
-                            ...on TagProperties { name }
+                      editableProperties { description }
+                      $schema_query
+                      ownership {
+                        owners {
+                          owner {
+                            ...on CorpUser { urn }
+                            ...on CorpGroup { urn }
+                          }
+                          type
+                        }
+                      }
+                      tags {
+                        tags {
+                          tag {
+                            ...on Tag {
+                              urn
+                              properties {
+                                ...on TagProperties { name }
+                              }
+                            }
                           }
                         }
                       }
@@ -218,10 +234,16 @@ def get_datahub_entities(start: int = 0, limit: int = 10000) -> List[DHEntity]:
                 }
               }
             }
-          }
-        }"""
+        """
         )
-    ).substitute(field_vars=field_vars, start=start, limit=max(limit, 10000))
+    )
+
+    query_body = query_body_template.substitute(
+        field_vars=field_vars,
+        start=start,
+        limit=max(limit, 10000),
+        schema_query=schema_query if with_schema else "",
+    )
 
     body = {"query": query_body, "variables": {}}
     dh_entities = datahub_post(body=body)["data"]["search"]["searchResults"]
@@ -385,35 +407,6 @@ def update_institutional_memory(
             f"Failed to update institutional memory (but returned 200) for {resource_urn}"
         )
     return response[endpoint]
-
-
-def update_description(
-    resource_urn: str, description: str, column: str | None = None
-) -> bool:
-    """
-    :param resource_urn: The entity/resource URN to update
-    :param description: The new description
-    :param column: If left out, then the description is updated for the entity. If provided, then the
-      description will be applied to this column (field).
-    :return:
-    """
-    warnings.warn(
-        "update_description is deprecated and will be removed in the next release, "
-        "please use update_field_descriptions or update_dataset_description.",
-        DeprecationWarning,
-    )
-    subresource = (
-        f', subResourceType: DATASET_FIELD, subResource: "{column}"' if column else ""
-    )
-    body = {
-        "query": (
-            "mutation updateDescription { updateDescription(input: {"
-            f'resourceUrn: "{resource_urn}", description: "{description}"{subresource}'
-            "}) }"
-        ),
-        "variables": {},
-    }
-    return datahub_post(body=body)["data"]["updateDescription"]
 
 
 def set_group_owner(
