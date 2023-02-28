@@ -121,15 +121,19 @@ def emit_metadata(
 
 
 def get_datahub_entities(
-    start: int = 0, limit: int = 10000, with_schema: bool = False
+    start: int = 0,
+    limit: int | None = None,
+    with_schema: bool = False,
+    chunk_size: int | None = None,
 ) -> List[DHEntity]:
     """
     :param start: Index of the first record to return
-    :param limit: Maximum number of records to return (default and maximum per query
-      is 10000).
+    :param limit: Maximum number of records to query
     :param with_schema: If True (default is False) then schema fields and descriptions
       will be retrieved (warning: may be slow or cause the DataHub endpoint to 503, in
       which case you will need to retrieve your entities in chunks).
+    :param chunk_size: If provided, the entities will be retrieved in chunks of this
+      size.
     :return: Dictionary of snowflake name (e.g. prep.core.calendar) to DataHub urn
       e.g. urn:li:dataset:(urn:li:dataPlatform:snowflake,prep.core.calendar,PROD)
     """
@@ -167,7 +171,7 @@ def get_datahub_entities(
 
     schema_query = dedent(
         """
-                          schemaMetadata {
+                  schemaMetadata {
                     fields {
                       ...on SchemaField {
                         $field_vars
@@ -189,7 +193,7 @@ def get_datahub_entities(
         dedent(
             """
             {
-              search(input: {type: DATASET, query: "*", start:$start, count: $limit})
+              search(input: {type: DATASET, query: "*", start: $start, count: $limit})
               {
                 start
                 count
@@ -238,21 +242,40 @@ def get_datahub_entities(
         )
     )
 
-    query_body = query_body_template.substitute(
-        field_vars=field_vars,
-        start=start,
-        limit=max(limit, 10000),
-        schema_query=schema_query if with_schema else "",
-    )
+    _start = start
+    _chunk_size = chunk_size or 10000
+    _limit = limit or float("inf")
 
-    body = {"query": query_body, "variables": {}}
-    dh_entities = datahub_post(body=body)["data"]["search"]["searchResults"]
-
-    # important: you can get more than one URN per qualified name because there may be
-    # more than one platform (e.g. dbt, snowflake, etc.).
     out: List[DHEntity] = []
-    for dh_entity in dh_entities:
-        out.append(DHEntity.from_dict(_dict=dh_entity["entity"]))
+    while len(out) < _limit:
+        query_body = query_body_template.substitute(
+            field_vars=field_vars,
+            start=_start,
+            limit=_chunk_size,
+            schema_query=schema_query if with_schema else "",
+        )
+
+        body = {"query": query_body, "variables": {}}
+
+        try:
+            dh_entities = datahub_post(body=body)["data"]["search"]["searchResults"]
+        except DataHubError as e:
+            if e.args:
+                error_classification = jmespath.search(
+                    "errors[0].extensions.classification", e.args[0]
+                )
+                if error_classification == "DataFetchingException":
+                    break
+                else:
+                    raise e
+            else:
+                raise e
+        else:
+            _start += _chunk_size
+            # important: you can get more than one URN per qualified name because there
+            # may be more than one platform (e.g. dbt, snowflake, etc.).
+            for dh_entity in dh_entities:
+                out.append(DHEntity.from_dict(_dict=dh_entity["entity"]))
 
     return out
 
