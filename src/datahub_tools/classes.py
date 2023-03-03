@@ -5,6 +5,7 @@ import subprocess
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
+import datahub.emitter.mce_builder as builder
 import jmespath
 
 
@@ -67,6 +68,12 @@ class DHEntity(DH):
 
     def has_owners(self) -> bool:
         return bool(self.owners)
+
+    def get_platform(self):
+        return builder.dataset_urn_to_key(self.urn).platform
+
+    def get_name(self):
+        return builder.dataset_urn_to_key(self.urn).name
 
     def get_priority(self) -> Optional[str]:
         """
