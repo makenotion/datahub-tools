@@ -271,6 +271,8 @@ def get_datahub_entities(
             else:
                 raise e
         else:
+            if not dh_entities:
+                break
             _start += _chunk_size
             # important: you can get more than one URN per qualified name because there
             # may be more than one platform (e.g. dbt, snowflake, etc.).
