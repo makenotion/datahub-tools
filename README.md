@@ -7,7 +7,7 @@ A python quasi-client (and tools) that interacts with DataHub GraphQL endpoints.
 Requires python >=3.7
 
 ```bash
-pip install https://github.com/makenotion/datahub-tools
+pip install git+https://github.com/makenotion/datahub-tools
 ```
 
 Three environment variables are required:
