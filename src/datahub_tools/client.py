@@ -461,7 +461,7 @@ def _set_owner(owner: str, urns: List[str]):
 def remove_owners(owners: Iterable[str], urns: List[str]):
     if isinstance(owners, str):
         owners = [owners]
-    owner_urns = ", ".join(owners)
+    owner_urns = ", ".join(f'"{owner}"' for owner in owners)
     resource_urns = ", ".join([f'{{ resourceUrn: "{urn}" }}' for urn in urns])
     _input = f"{{ ownerUrns: [ {owner_urns} ], resources: [ {resource_urns} ] }}"
     response = _post_mutation(endpoint="batchRemoveOwners", _input=_input)
