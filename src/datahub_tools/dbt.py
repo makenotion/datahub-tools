@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import reduce
 from operator import iconcat
 from pathlib import Path
-from typing import Any, Dict, Iterable, Set
+from typing import Any, Dict, Set
 
 import jmespath
 
@@ -122,7 +123,7 @@ def get_dbt_dependencies(
         dependencies[unique_id] = set(data_lineage)
 
     dependency_tree = {}
-    for unique_id, dbt_resource in dbt_resources_by_unique_id.items():
+    for unique_id in dbt_resources_by_unique_id.keys():
         upstream_deps = get_dependency_tree(name=unique_id, dependencies=dependencies)
 
         downstream_models = reverse_dependencies(dependencies=dependencies)

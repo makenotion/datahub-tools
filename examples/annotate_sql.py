@@ -24,7 +24,6 @@ from string import Template
 from typing import Dict, List
 
 import click
-
 from datahub_tools.utils import extract_dbt_resources
 
 # Every link shares this same prefix. We specify it separately so that we can remove

@@ -18,10 +18,6 @@ dependencies = [
 include-package-data = false
 package-dir = {"" = "src"}
 
-[tool.isort]
-profile = 'black'
-line_length = 110
-
 [tool.black]
 target-version = ['py37']
 include = '\.pyi?$'
@@ -57,3 +53,34 @@ python =
 deps = pytest
 commands = pytest
 '''
+
+# rules doc: https://beta.ruff.rs/docs/rules/#mccabe-c90
+[tool.ruff]
+select = ["B", "C", "E", "F", "I", "N", "W", "RUF"]
+
+fixable = [
+    "I",    # isort
+]
+unfixable = []
+
+exclude = [
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pytype",
+    ".ruff_cache",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+
+line-length = 110
+target-version = "py37"

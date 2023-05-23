@@ -23,9 +23,13 @@ from typing import Any, Dict, List
 
 import click
 import datahub.emitter.mce_builder as builder
-
 from datahub_tools.classes import DHEntity
-from datahub_tools.client import emit_metadata, get_datahub_entities, remove_tags, set_tags
+from datahub_tools.client import (
+    emit_metadata,
+    get_datahub_entities,
+    remove_tags,
+    set_tags,
+)
 from datahub_tools.utils import extract_dbt_resources
 
 
@@ -101,7 +105,7 @@ def _set_priority_tags(
 )
 @click.option("--dry_run", is_flag=True, default=False)
 @click.pass_context
-def propagate_dbt_priority_metadata(manifest_file: Path, dry_run: bool):
+def propagate_dbt_priority_metadata(manifest_file: Path, dry_run: bool):  # noqa
     """
     Propagates dbt priority metadata flags to upstreams dbt resources
 

@@ -4,9 +4,10 @@ import functools
 import logging
 import os
 import re
+from collections.abc import Iterable
 from string import Template
 from textwrap import dedent
-from typing import Dict, Iterable, List
+from typing import Dict, List
 
 import jmespath
 import requests
@@ -246,7 +247,7 @@ def get_datahub_entities(
     _chunk_size = chunk_size or 10000
     _limit = limit or float("inf")
 
-    out: List[DHEntity] = []
+    out: list[DHEntity] = []
     while len(out) < _limit:
         query_body = query_body_template.substitute(
             field_vars=field_vars,
@@ -282,12 +283,20 @@ def get_datahub_entities(
     return out
 
 
-def get_owners(resource_urn: str) -> List[Dict[str, str]]:
+def get_owners(
+    resource_urn: str, user_fields: str = "urn type", group_fields: str = "urn type"
+) -> list[dict[str, str]]:
     """
     Find a list of owners for a given resource_urn. Example format of one entry in the
     output list is{'urn': 'urn:li:corpGroup:my_group_team_name', 'type': 'CORP_GROUP'}
-    :param resource_urn:
-    :return: A list of dictionaries, each an type of owner for the given resource
+    :param resource_urn: The resource you want to fetch
+    :param user_fields: The fields you want to extract from the CorpUser object.
+      Defaults to 'urn type'. See
+      https://datahubproject.io/docs/graphql/objects#corpuser
+    :param group_fields: The fields you want to extract from the CorpUser object.
+      Defaults to 'urn type'. See
+      https://datahubproject.io/docs/graphql/objects#corpgroup
+    :return: A list of dictionaries, each a type of owner for the given resource
     """
     body = {
         "query": (
@@ -298,8 +307,8 @@ def get_owners(resource_urn: str) -> List[Dict[str, str]]:
                     ownership {
                       owners {
                         owner {
-                          ... on CorpUser { urn type }
-                          ... on CorpGroup { urn type }
+                          ... on CorpUser { $user_fields }
+                          ... on CorpGroup { $group_fields }
                         }
                       }
                     }
@@ -307,7 +316,11 @@ def get_owners(resource_urn: str) -> List[Dict[str, str]]:
             }
             """
             )
-        ).substitute(resource_urn=resource_urn),
+        ).substitute(
+            resource_urn=resource_urn,
+            user_fields=user_fields,
+            group_fields=group_fields,
+        ),
         "variables": {},
     }
     response = datahub_post(body=body) or {}

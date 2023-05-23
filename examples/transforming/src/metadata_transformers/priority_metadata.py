@@ -70,14 +70,20 @@ class PriorityMetadata:
     def get_priority_urn(self) -> str:
         return builder.make_tag_urn(f"Priority: {self.get_priority()}")
 
-    def get_metadata_for_datahub(self) -> dict[str, str]:
-        out = {
-            "has downstream dependencies that are reported externally": self.is_reported_externally,
-            "has downstream dependencies that are used to drive company metrics": self.is_used_to_drive_company_metrics,
-            "is reported externally": self.original_is_reported_externally,
-            "is used to drive company metrics": self.original_is_used_to_drive_company_metrics,
+    def get_metadata_for_datahub(self) -> Dict[str, str]:
+        keys = {
+            "has downstream dependencies that are reported externally",
+            "has downstream dependencies that are used to drive company metrics",
+            "is reported externally",
+            "is used to drive company metrics",
         }
-        return {k: str(v) for k, v in out.items()}
+        vals = {
+            self.is_reported_externally,
+            self.is_used_to_drive_company_metrics,
+            self.original_is_reported_externally,
+            self.original_is_used_to_drive_company_metrics,
+        }
+        return {k: str(v) for k, v in dict(zip(keys, vals)).items()}
 
 
 def generate_priority_metadata(

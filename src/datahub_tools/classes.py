@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import subprocess
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import datahub.emitter.mce_builder as builder
 import jmespath
@@ -28,7 +28,7 @@ class DHTag(DH):
     def is_priority(self) -> bool:
         return self.urn.startswith("urn:li:tag:Priority")
 
-    def get_priority(self) -> Optional[str]:
+    def get_priority(self) -> str | None:
         return self.name.rsplit(" ")[1] if self.is_priority() else None
 
 
@@ -75,7 +75,7 @@ class DHEntity(DH):
     def get_name(self):
         return builder.dataset_urn_to_key(self.urn).name
 
-    def get_priority(self) -> Optional[str]:
+    def get_priority(self) -> str | None:
         """
         return the priority of the dataset, as reflected by its tags (priority tags look like `Priority: P0`)
         :return:
