@@ -1,5 +1,11 @@
 # Change Log
 
+### v1.1.0 - 2023-05-23 Ada Draginda
+#### Changes
+* Added a get_glossary_terms function
+#### Fixes
+* Fix an incorrect substitution when fetching entities
+
 ### v1.0.0 - 2023-02-21 Ada Draginda
 #### Deprecations
 * `extract_dbt_resources` has moved from a soft to a hard deprecation. Instead, use
