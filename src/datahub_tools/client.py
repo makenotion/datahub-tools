@@ -170,8 +170,9 @@ def get_datahub_entities(
     """
     )
 
-    schema_query = dedent(
-        """
+    schema_query = Template(
+        dedent(
+            """
                   schemaMetadata {
                     fields {
                       ...on SchemaField {
@@ -188,7 +189,8 @@ def get_datahub_entities(
                     }
                   }
         """
-    )
+        )
+    ).substitute(field_vars=field_vars)
 
     query_body_template = Template(
         dedent(
@@ -250,7 +252,6 @@ def get_datahub_entities(
     out: list[DHEntity] = []
     while len(out) < _limit:
         query_body = query_body_template.substitute(
-            field_vars=field_vars,
             start=_start,
             limit=_chunk_size,
             schema_query=schema_query if with_schema else "",
@@ -326,6 +327,55 @@ def get_owners(
     response = datahub_post(body=body) or {}
     raw_owners = jmespath.search("data.dataset.ownership.owners", response) or []
     return [x["owner"] for x in raw_owners]
+
+
+def get_glossary_terms() -> List[Dict]:
+    body = {
+        "query": dedent(
+            """
+            {
+              search(input: {type: GLOSSARY_TERM, query: "*", start:0, count: 1000}) {
+                searchResults {
+                  entity {
+                    urn
+                    ... on GlossaryTerm{
+                      deprecation { deprecated }
+                      properties { name }
+                      parentNodes {
+                        nodes { urn properties { name } }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """
+        ),
+        "variables": {},
+    }
+    search_results = datahub_post(body=body)["data"]["search"]["searchResults"]
+    glossary_terms = []
+    for entity in search_results:
+        glossary_term = entity["entity"]
+
+        parents = []
+        for parent in glossary_term["parentNodes"]["nodes"]:
+            parents.append(
+                {
+                    "urn": parent["urn"],
+                    "name": parent["properties"]["name"],
+                }
+            )
+
+        glossary_terms.append(
+            {
+                "urn": glossary_term["urn"],
+                "is_deprecated": bool(glossary_term["deprecation"]),
+                "name": glossary_term["properties"]["name"],
+                "parents": parents,
+            }
+        )
+    return glossary_terms
 
 
 def get_datahub_users() -> List[Dict[str, str]]:
