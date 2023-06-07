@@ -218,8 +218,8 @@ def get_datahub_entities(
                       ownership {
                         owners {
                           owner {
-                            ...on CorpUser { urn }
-                            ...on CorpGroup { urn }
+                            ...on CorpUser { urn editableProperties { email }}
+                            ...on CorpGroup { urn editableProperties { email }}
                           }
                           type
                         }
