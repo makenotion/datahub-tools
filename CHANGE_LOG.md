@@ -1,5 +1,12 @@
 # Change Log
 
+### v2.0.0 - 2023-07-12 Ada Draginda
+#### Deprecations
+* groups and users selection and return have been changed significantly to meet
+the new format by acryl.
+#### Changes
+* minimum version of acryl-datahub is now 0.10.3.2
+
 ### v1.1.0 - 2023-05-23 Ada Draginda
 #### Changes
 * Added a get_glossary_terms function

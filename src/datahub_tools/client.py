@@ -17,8 +17,8 @@ from datahub.metadata.schema_classes import ChangeTypeClass, DatasetPropertiesCl
 
 from .classes import DataHubError, DHEntity
 
-BUSINESS_OWNER = "BUSINESS_OWNER"
-TECHNICAL_OWNER = "TECHNICAL_OWNER"
+BUSINESS_OWNER = "urn:li:ownershipType:__system__business_owner"
+TECHNICAL_OWNER = "urn:li:ownershipType:__system__technical_owner"
 
 
 def _wrapped_getenv(token) -> str:
@@ -382,37 +382,86 @@ def get_datahub_users() -> List[Dict[str, str]]:
     """
     :return: List of datahub users and their metadata (including urn)
     """
+    qry = """
+    {
+        listUsers(input: { query: "*", start: 0, count: 10000 }) {
+            users {
+                urn
+                type
+                username
+                properties {
+                    active
+                    displayName
+                    email
+                    title
+                    fullName
+                    departmentName
+                }
+                editableProperties {
+                    displayName
+                    title
+                    teams
+                    slack
+                    email
+                }
+                status
+                isNativeUser
+            }
+        }
+    }
+    """
+
     body = {
-        "query": (
-            '{ listUsers(input: { query: "*", start: 0, count: 10000 }) '
-            "{ start count total users "
-            "{ ... on CorpUser { urn type username editableProperties "
-            "{ ... on CorpUserEditableProperties { displayName email } "
-            "} } } } }"
-        ),
+        "query": qry,
         "variables": {},
     }
     users = []
     for user in datahub_post(body=body)["data"]["listUsers"]["users"]:
-        editable_props = user.pop("editableProperties")
-        if editable_props:
-            user.update(editable_props)
+        # editable_props = user.pop("editableProperties")
+        # if editable_props:
+        #     user.update(editable_props)
         users.append(user)
     return users
 
 
 def get_datahub_groups() -> List[Dict[str, str]]:
     """
-    :return: List of datahub group and their metadata (including urn)
+    :return: List of datahub groups and their metadata (including urn)
     """
+    qry = """
+    {
+        listGroups(input: { query: "*", start: 0, count: 10000 }) {
+            groups {
+                urn
+                type
+                name
+                properties {
+                    displayName
+                    description
+                    email
+                    slack
+                }
+                editableProperties {
+                    description
+                    slack
+                    email
+                }
+            }
+        }
+    }
+    """
+
     body = {
-        "query": (
-            '{ listGroups(input: { query: "*", start: 0, count: 10000 }) '
-            "{ start count total groups { ... on CorpGroup { urn type name } } } }"
-        ),
+        "query": qry,
         "variables": {},
     }
-    return datahub_post(body=body)["data"]["listGroups"]["groups"]
+    users = []
+    for user in datahub_post(body=body)["data"]["listGroups"]["groups"]:
+        # editable_props = user.pop("editableProperties")
+        # if editable_props:
+        #     user.update(editable_props)
+        users.append(user)
+    return users
 
 
 def _clean_string(_str: str) -> str:
@@ -500,16 +549,14 @@ def update_institutional_memory(
 def set_group_owner(
     group_urn: str, resource_urns: List[str], owner_type: str = TECHNICAL_OWNER
 ):
-    owner = f'{{ ownerUrn: "{group_urn}", ownerEntityType: CORP_GROUP, type: {owner_type} }}'
+    owner = f'{{ ownerUrn: "{group_urn}", ownerEntityType: CORP_GROUP, ownershipTypeUrn: "{owner_type}" }}'
     _set_owner(urns=resource_urns, owner=owner)
 
 
 def set_user_owner(
     user_urn: str, resource_urns: List[str], owner_type: str = BUSINESS_OWNER
 ):
-    owner = (
-        f'{{ ownerUrn: "{user_urn}", ownerEntityType: CORP_USER, type: {owner_type} }}'
-    )
+    owner = f'{{ ownerUrn: "{user_urn}", ownerEntityType: CORP_USER, ownershipTypeUrn: "{owner_type}" }}'
     _set_owner(urns=resource_urns, owner=owner)
 
 
