@@ -563,7 +563,6 @@ def set_user_owner(
 def _set_owner(owner: str, urns: List[str]):
     resource_urns = ", ".join([f'{{ resourceUrn: "{urn}" }}' for urn in urns])
     _input = f"{{ owners: [ {owner} ], resources: [ {resource_urns} ] }}"
-    print(_input)
     response = _post_mutation(endpoint="batchAddOwners", _input=_input)
     if not response:
         raise ValueError(f"Setting table owners for {owner} failed! (but returned 200)")
