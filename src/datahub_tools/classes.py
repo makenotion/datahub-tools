@@ -107,7 +107,7 @@ class DHEntity(DH):
         owner_urns_by_type = defaultdict(list)
 
         for raw_owner in raw_owners:
-            owner_type = raw_owner["type"]
+            owner_type = jmespath.search("ownershipType.info.name", raw_owner)
             owner_urns = owner_urns_by_type[owner_type]
             owner_urns.append(raw_owner["owner"]["urn"])
             if owner_type not in owner_urns_by_type:
