@@ -1,5 +1,8 @@
 # Change Log
 
+### v2.0.1 - 2023-07-20 Ada Draginda
+* Fix in `get_datahub_entities`: updated how we fetch the owner type as the underlying API had changed.
+
 ### v2.0.0 - 2023-07-12 Ada Draginda
 #### Deprecations
 * groups and users selection and return have been changed significantly to meet
@@ -21,7 +24,7 @@ the new format by acryl.
 `update_field_descriptions` or `update_dataset_description`
 
 #### Changes
-* DataHub posts are are now logged with fewer linebreaks and repeated spaces
+* DataHub posts are now logged with fewer linebreaks and repeated spaces
 * `client.get_datahub_entities` no longer returns schema data, by default. You can turn this feature
 back on with the `with_schema` argument. This change was made for performance reasons.
 

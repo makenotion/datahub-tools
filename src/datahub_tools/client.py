@@ -173,21 +173,21 @@ def get_datahub_entities(
     schema_query = Template(
         dedent(
             """
-                  schemaMetadata {
-                    fields {
-                      ...on SchemaField {
-                        $field_vars
-                        type
-                      }
-                    }
+              schemaMetadata {
+                fields {
+                  ...on SchemaField {
+                    $field_vars
+                    type
                   }
-                  editableSchemaMetadata {
-                    editableSchemaFieldInfo {
-                      ...on EditableSchemaFieldInfo {
-                        $field_vars
-                      }
-                    }
+                }
+              }
+              editableSchemaMetadata {
+                editableSchemaFieldInfo {
+                  ...on EditableSchemaFieldInfo {
+                    $field_vars
                   }
+                }
+              }
         """
         )
     ).substitute(field_vars=field_vars)
@@ -217,11 +217,11 @@ def get_datahub_entities(
                       $schema_query
                       ownership {
                         owners {
+                          ownershipType { info { name } }
                           owner {
                             ...on CorpUser { urn editableProperties { email }}
                             ...on CorpGroup { urn editableProperties { email }}
                           }
-                          type
                         }
                       }
                       tags {
@@ -303,18 +303,18 @@ def get_owners(
         "query": (
             Template(
                 """
-            {
-                dataset(urn: "$resource_urn") {
-                    ownership {
-                      owners {
-                        owner {
-                          ... on CorpUser { $user_fields }
-                          ... on CorpGroup { $group_fields }
+                {
+                    dataset(urn: "$resource_urn") {
+                        ownership {
+                            owners {
+                                owner {
+                                    ... on CorpUser { $user_fields }
+                                    ... on CorpGroup { $group_fields }
+                                }
+                            }
                         }
-                      }
                     }
-                  }
-            }
+                }
             """
             )
         ).substitute(
