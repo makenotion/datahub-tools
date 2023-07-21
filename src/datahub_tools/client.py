@@ -126,6 +126,7 @@ def get_datahub_entities(
     limit: int | None = None,
     with_schema: bool = False,
     chunk_size: int | None = None,
+    resource_urns: List[str] | None = None,
 ) -> List[DHEntity]:
     """
     :param start: Index of the first record to return
@@ -135,6 +136,7 @@ def get_datahub_entities(
       which case you will need to retrieve your entities in chunks).
     :param chunk_size: If provided, the entities will be retrieved in chunks of this
       size.
+    :param resource_urns: Optional list of dataset resource_urns
     :return: Dictionary of snowflake name (e.g. prep.core.calendar) to DataHub urn
       e.g. urn:li:dataset:(urn:li:dataPlatform:snowflake,prep.core.calendar,PROD)
     """
@@ -192,27 +194,20 @@ def get_datahub_entities(
         )
     ).substitute(field_vars=field_vars)
 
-    query_body_template = Template(
+    query_fields = Template(
         dedent(
             """
-            {
-              search(input: {type: DATASET, query: "*", start: $start, count: $limit})
-              {
-                start
-                count
-                searchResults {
-                  entity {
-                    urn
-                    type
-                    ...on Dataset {
-                      name
-                      properties {
-                        qualifiedName
-                        description
-                        customProperties {
-                          ...on CustomPropertiesEntry { key value }
-                        }
-                      }
+                urn
+                type
+                ...on Dataset {
+                  name
+                  properties {
+                    qualifiedName
+                    description
+                    customProperties {
+                      ...on CustomPropertiesEntry { key value }
+                    }
+                  }
                       editableProperties { description }
                       $schema_query
                       ownership {
@@ -239,28 +234,51 @@ def get_datahub_entities(
                     }
                   }
                 }
-              }
-            }
-        """
+
+            """
         )
-    )
+    ).substitute(schema_query=schema_query if with_schema else "")
 
     _start = start
     _chunk_size = chunk_size or 10000
     _limit = limit or float("inf")
 
     out: list[DHEntity] = []
-    while len(out) < _limit:
-        query_body = query_body_template.substitute(
-            start=_start,
-            limit=_chunk_size,
-            schema_query=schema_query if with_schema else "",
-        )
+
+    while len(out) < (1 if resource_urns else _limit):
+        if resource_urns:
+            dataset_query = Template('dataset$i: dataset(urn: "$urn"){ $query_fields }')
+
+            query_parts = [
+                dataset_query.substitute(i=i + 1, urn=urn, query_fields=query_fields)
+                for i, urn in enumerate(resource_urns)
+            ]
+
+            query_body = "{" + ",".join(query_parts) + "}"
+
+        else:
+            query_body = Template(
+                """
+                {
+                    search(input: {type: DATASET, query: "*", start: $start, count: $limit}){
+                        start
+                        count
+                        searchResults {
+                            entity { $query_fields }
+                        }
+                    }
+                }
+                """
+            ).substitute(start=_start, limit=_chunk_size, query_fields=query_fields)
 
         body = {"query": query_body, "variables": {}}
 
         try:
-            dh_entities = datahub_post(body=body)["data"]["search"]["searchResults"]
+            query_result = datahub_post(body=body)["data"]
+            if resource_urns:
+                dh_entities = [{"entity": v} for k, v in query_result.items()]
+            else:
+                dh_entities = query_result["search"]["searchResults"]
         except DataHubError as e:
             if e.args:
                 error_classification = jmespath.search(
@@ -481,20 +499,25 @@ def update_field_descriptions(
       for the column and the description.
     :return: Resource URN changed
     """
-    fields = [
-        f'{{ fieldPath: "{k}", description: "{_clean_string(v)}" }}'
-        for k, v in field_descriptions.items()
-    ]
-    _input = f"{{ editableSchemaMetadata: {{ editableSchemaFieldInfo: [ {','.join(fields)} ] }} }}"
-    endpoint = "updateDataset"
-    response = _post_mutation(
-        endpoint=endpoint, _input=_input, urn=resource_urn, subselection="urn"
-    )
-    if not response:
-        raise ValueError(
-            f"Failed to update field descriptions (but returned 200) for {resource_urn}"
+    responses = {}
+    for k, v in field_descriptions.items():
+        _input = (
+            f'{{ description: "{_clean_string(v)}", '
+            f'resourceUrn: "{resource_urn}", '
+            f"subResourceType: DATASET_FIELD, "
+            f'subResource: "{k}" }}'
         )
-    return response[endpoint]
+        endpoint = "updateDescription"
+        response = _post_mutation(
+            endpoint=endpoint,
+            _input=_input,
+        )
+        if not response:
+            raise ValueError(
+                f"Failed to update field description '{k}' (but returned 200) for {resource_urn}"
+            )
+        responses[k] = response[endpoint]
+    return responses
 
 
 def update_dataset_description(resource_urn: str, description: str) -> Dict[str, str]:
