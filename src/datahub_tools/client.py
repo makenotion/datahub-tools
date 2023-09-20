@@ -232,8 +232,6 @@ def get_datahub_entities(
                         }
                       }
                     }
-                  }
-                }
 
             """
         )

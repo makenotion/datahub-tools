@@ -1,6 +1,10 @@
 # Change Log
 
-### v2.1.0 - 2023-07-17 Theodore Wou
+### v2.1.1 - 2023-09-20 Theo Wou
+
+- Fix extraneous braces in `get_datahub_entities`
+
+### v2.1.0 - 2023-07-17 Theo Wou
 
 #### Changes
 
