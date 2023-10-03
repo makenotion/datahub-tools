@@ -1,6 +1,14 @@
 # Change Log
 
+### v2.2.0 - 2023-09-20 Theo Wou
+
+#### Changes
+
+- Extend DHEntity.from_dict() to add the ability to create a DHEntity from a standard dictionary
+
 ### v2.1.1 - 2023-09-20 Theo Wou
+
+#### Fixes
 
 - Fix extraneous braces in `get_datahub_entities`
 

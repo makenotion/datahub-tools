@@ -103,7 +103,10 @@ class DHEntity(DH):
     @classmethod
     def from_dict(cls, _dict: Dict[str, Any]):
         # used to parse the results from query to the graphql search endpoint
-        raw_owners = jmespath.search("ownership.owners", _dict) or []
+        # alternatively, specify a standard dictionary with _ prefixed to keys
+        raw_owners = (
+            jmespath.search("ownership.owners", _dict) or _dict.get("_owners") or []
+        )
         owner_urns_by_type = defaultdict(list)
 
         for raw_owner in raw_owners:
@@ -117,12 +120,18 @@ class DHEntity(DH):
         # and to not use `name`. However, some entities do not have a qualified name,
         # so we need fallback.
         entity_name = (
-            jmespath.search("properties.qualifiedName", _dict) or _dict["name"]
+            jmespath.search("properties.qualifiedName", _dict)
+            or _dict.get("_name")
+            or _dict["name"]
         )
-        description = jmespath.search("properties.description", _dict)
-        editable_description = jmespath.search("editableProperties.description", _dict)
+        description = jmespath.search("properties.description", _dict) or _dict.get(
+            "_description"
+        )
+        editable_description = jmespath.search(
+            "editableProperties.description", _dict
+        ) or _dict.get("editable_description")
 
-        raw_tags = jmespath.search("tags.tags", _dict) or []
+        raw_tags = jmespath.search("tags.tags", _dict) or _dict.get("_tags") or []
         tags = [
             DHTag(
                 urn=tag["tag"]["urn"], name=jmespath.search("tag.properties.name", tag)
@@ -130,21 +139,30 @@ class DHEntity(DH):
             for tag in raw_tags
         ]
 
-        raw_fields = jmespath.search("schemaMetadata.fields", _dict) or []
+        raw_fields = (
+            jmespath.search("schemaMetadata.fields", _dict)
+            or _dict.get("_fields")
+            or []
+        )
         fields = [DHEntityField.from_dict(x) for x in raw_fields]
 
         raw_editable_fields = (
             jmespath.search("editableSchemaMetadata.editableSchemaFieldInfo", _dict)
+            or _dict.get("_editable_fields")
             or []
         )
         editable_fields = [DHEntityField.from_dict(x) for x in raw_editable_fields]
 
-        raw_metadata = jmespath.search("properties.customProperties", _dict) or []
+        raw_metadata = (
+            jmespath.search("properties.customProperties", _dict)
+            or _dict.get("_custom_properties")
+            or []
+        )
         raw_metadata = {x["key"]: x["value"] for x in raw_metadata}
 
         return DHEntity(
             name=entity_name,
-            urn=_dict["urn"],
+            urn=_dict.get("_urn") or _dict["urn"],
             description=description,
             editable_description=editable_description,
             fields=fields,
