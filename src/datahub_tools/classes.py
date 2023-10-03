@@ -129,7 +129,7 @@ class DHEntity(DH):
         )
         editable_description = jmespath.search(
             "editableProperties.description", _dict
-        ) or _dict.get("editable_description")
+        ) or _dict.get("_editable_description")
 
         raw_tags = jmespath.search("tags.tags", _dict) or _dict.get("_tags") or []
         tags = [
