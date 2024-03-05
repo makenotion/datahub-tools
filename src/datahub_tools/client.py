@@ -480,9 +480,12 @@ def get_datahub_groups() -> List[Dict[str, str]]:
     return users
 
 
-def _clean_string(_str: str) -> str:
+def _escape_quotes(_str: str) -> str:
     """
-    convenience method to escape quotes within a string
+    Convenience method to escape quotes within a string
+    For GraphQL queries this cannot be used within an f-string otherwise it will incorrectly escape the quotes
+        e.g. f'"{_escape_quotes('\"foo\"}"' will output '\\\"foo\\\"' instead of the desired '\\"foo\\"'
+        instead use '"' + _escape_quotes('\"foo\" + '"'
     """
     return re.sub(r'\\*"', '\\"', _str)
 
@@ -500,7 +503,7 @@ def update_field_descriptions(
     responses = {}
     for k, v in field_descriptions.items():
         _input = (
-            f'{{ description: "{_clean_string(v)}", '
+            '{ description: "' + _escape_quotes(v) + '", '
             f'resourceUrn: "{resource_urn}", '
             f"subResourceType: DATASET_FIELD, "
             f'subResource: "{k}" }}'
@@ -526,7 +529,7 @@ def update_dataset_description(resource_urn: str, description: str) -> Dict[str,
     :return: Resource URN changed
     """
     _input = (
-        f'{{ editableProperties: {{ description: "{_clean_string(description)}" }} }}'
+        '{ editableProperties: { description: "' + _escape_quotes(description) + '" } }'
     )
     endpoint = "updateDataset"
     response = _post_mutation(
@@ -552,7 +555,8 @@ def update_institutional_memory(
     :return:
     """
     element = (
-        f'{{ url: "{url}", description: "{_clean_string(description)}", '
+        f'{{ url: "{url}", '
+        'description: "' + _escape_quotes(description) + '", '
         f'author: "{author_urn}", createdAt: {created_at} }}'
     )
     _input = f"{{ institutionalMemory: {{ elements: [{element}] }} }}"
