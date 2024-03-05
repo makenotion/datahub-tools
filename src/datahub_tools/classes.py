@@ -4,7 +4,7 @@ import logging
 import subprocess
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 
 import datahub.emitter.mce_builder as builder
 import jmespath
@@ -38,11 +38,11 @@ class DHEntityField:
     name: str
     type: str | None
     description: str | None
-    tags: Dict | None
-    glossary_terms: Dict | None
+    tags: dict | None
+    glossary_terms: dict | None
 
     @classmethod
-    def from_dict(cls, _dict: Dict) -> DHEntityField:
+    def from_dict(cls, _dict: dict) -> DHEntityField:
         # documentation at https://datahubproject.io/docs/graphql/objects#schemafield
         return DHEntityField(
             name=_dict["fieldPath"],
@@ -57,12 +57,12 @@ class DHEntityField:
 class DHEntity(DH):
     description: str | None
     editable_description: str | None
-    fields: List[DHEntityField]
-    editable_fields: List[DHEntityField] | None
+    fields: list[DHEntityField]
+    editable_fields: list[DHEntityField] | None
     # aka custom properties
-    metadata: Dict[str, str] | None
-    owners: Dict[str, List[str]] | None
-    tags: List[DHTag] | None
+    metadata: dict[str, str] | None
+    owners: dict[str, list[str]] | None
+    tags: list[DHTag] | None
 
     def has_tags(self) -> bool:
         return bool(self.tags)
@@ -101,7 +101,7 @@ class DHEntity(DH):
         logger.info("Done: datahub return code %d", output.returncode)
 
     @classmethod
-    def from_dict(cls, _dict: Dict[str, Any]):
+    def from_dict(cls, _dict: dict[str, Any]):
         # used to parse the results from query to the graphql search endpoint
         raw_owners = jmespath.search("ownership.owners", _dict) or []
         owner_urns_by_type = defaultdict(list)

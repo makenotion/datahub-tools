@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, NoReturn
+from typing import Any
 
 import datahub.emitter.mce_builder as builder
 import jmespath
@@ -48,7 +48,7 @@ class PriorityMetadata:
             is_used_to_drive_company_metrics=is_used_to_drive_company_metrics or False,
         )
 
-    def propagate(self, other: PriorityMetadata) -> NoReturn:
+    def propagate(self, other: PriorityMetadata) -> None:
         self.is_reported_externally = (
             self.is_reported_externally or other.is_reported_externally
         )
@@ -70,7 +70,7 @@ class PriorityMetadata:
     def get_priority_urn(self) -> str:
         return builder.make_tag_urn(f"Priority: {self.get_priority()}")
 
-    def get_metadata_for_datahub(self) -> Dict[str, str]:
+    def get_metadata_for_datahub(self) -> dict[str, str]:
         keys = {
             "has downstream dependencies that are reported externally",
             "has downstream dependencies that are used to drive company metrics",
@@ -96,11 +96,11 @@ def generate_priority_metadata(
     :param manifest_file: dbt manifest.json generated using `dbt docs`
     """
     # unique_id : resource
-    dbt_resources_by_unique_id: Dict[str, Dict[str, Any]] = extract_dbt_resources(
+    dbt_resources_by_unique_id: dict[str, dict[str, Any]] = extract_dbt_resources(
         manifest_file=manifest_file, resource_type_filter=["model", "snapshot"]
     )
     # unique_id : dependencies
-    deps: Dict[str, ModelDependencies] = get_dbt_dependencies(
+    deps: dict[str, ModelDependencies] = get_dbt_dependencies(
         dbt_resources_by_unique_id=dbt_resources_by_unique_id
     )
 

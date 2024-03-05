@@ -7,7 +7,6 @@ import re
 from collections.abc import Iterable
 from string import Template
 from textwrap import dedent
-from typing import Dict, List
 
 import jmespath
 import requests
@@ -40,7 +39,7 @@ def get_dh_graphql_url() -> str:
     return _wrapped_getenv("DATAHUB_GRAPHQL_URL")
 
 
-def datahub_post(body: Dict) -> Dict:
+def datahub_post(body: dict) -> dict:
     """
     Convenience function for sending POSTs to DataHub's GraphQL endpoint
     """
@@ -76,7 +75,7 @@ def get_dh_emitter():
 
 
 def emit_metadata(
-    metadata: Dict[str, str],
+    metadata: dict[str, str],
     resource_urn: str,
     cast_to_str: bool = False,
     sort: bool = True,
@@ -101,7 +100,7 @@ def emit_metadata(
 
     if not all(isinstance(k, str) and isinstance(v, str) for k, v in _metadata.items()):
         raise ValueError(
-            "metadata must be of type Dict[str, str] (only strings allowed). Either fix the data, or use "
+            "metadata must be of type dict[str, str] (only strings allowed). Either fix the data, or use "
             "the arg cast_to_str=True to str() wrap all keys and value."
         )
 
@@ -126,8 +125,8 @@ def get_datahub_entities(
     limit: int | None = None,
     with_schema: bool = False,
     chunk_size: int | None = None,
-    resource_urns: List[str] | None = None,
-) -> List[DHEntity]:
+    resource_urns: list[str] | None = None,
+) -> list[DHEntity]:
     """
     :param start: Index of the first record to return
     :param limit: Maximum number of records to query
@@ -137,7 +136,7 @@ def get_datahub_entities(
     :param chunk_size: If provided, the entities will be retrieved in chunks of this
       size.
     :param resource_urns: Optional list of dataset resource_urns
-    :return: Dictionary of snowflake name (e.g. prep.core.calendar) to DataHub urn
+    :return: dictionary of snowflake name (e.g. prep.core.calendar) to DataHub urn
       e.g. urn:li:dataset:(urn:li:dataPlatform:snowflake,prep.core.calendar,PROD)
     """
     # reuse the same set of vars for fields (editable and non-editable fields)
@@ -345,7 +344,7 @@ def get_owners(
     return [x["owner"] for x in raw_owners]
 
 
-def get_glossary_terms() -> List[Dict]:
+def get_glossary_terms() -> list[dict]:
     body = {
         "query": dedent(
             """
@@ -394,9 +393,9 @@ def get_glossary_terms() -> List[Dict]:
     return glossary_terms
 
 
-def get_datahub_users() -> List[Dict[str, str]]:
+def get_datahub_users() -> list[dict[str, str]]:
     """
-    :return: List of datahub users and their metadata (including urn)
+    :return: list of datahub users and their metadata (including urn)
     """
     qry = """
     {
@@ -440,9 +439,9 @@ def get_datahub_users() -> List[Dict[str, str]]:
     return users
 
 
-def get_datahub_groups() -> List[Dict[str, str]]:
+def get_datahub_groups() -> list[dict[str, str]]:
     """
-    :return: List of datahub groups and their metadata (including urn)
+    :return: list of datahub groups and their metadata (including urn)
     """
     qry = """
     {
@@ -491,8 +490,8 @@ def _escape_quotes(_str: str) -> str:
 
 
 def update_field_descriptions(
-    resource_urn: str, field_descriptions: Dict[str, str]
-) -> Dict[str, str]:
+    resource_urn: str, field_descriptions: dict[str, str]
+) -> dict[str, str]:
     """
     Update the editable schema field description for one or more fields within a dataset
     :param resource_urn: The URN for the related dataset/resource
@@ -521,7 +520,7 @@ def update_field_descriptions(
     return responses
 
 
-def update_dataset_description(resource_urn: str, description: str) -> Dict[str, str]:
+def update_dataset_description(resource_urn: str, description: str) -> dict[str, str]:
     """
     Update the editable description for a given dataset/resource
     :param resource_urn: The URN for the related dataset/resource
@@ -572,20 +571,20 @@ def update_institutional_memory(
 
 
 def set_group_owner(
-    group_urn: str, resource_urns: List[str], owner_type: str = TECHNICAL_OWNER
+    group_urn: str, resource_urns: list[str], owner_type: str = TECHNICAL_OWNER
 ):
     owner = f'{{ ownerUrn: "{group_urn}", ownerEntityType: CORP_GROUP, ownershipTypeUrn: "{owner_type}" }}'
     _set_owner(urns=resource_urns, owner=owner)
 
 
 def set_user_owner(
-    user_urn: str, resource_urns: List[str], owner_type: str = BUSINESS_OWNER
+    user_urn: str, resource_urns: list[str], owner_type: str = BUSINESS_OWNER
 ):
     owner = f'{{ ownerUrn: "{user_urn}", ownerEntityType: CORP_USER, ownershipTypeUrn: "{owner_type}" }}'
     _set_owner(urns=resource_urns, owner=owner)
 
 
-def _set_owner(owner: str, urns: List[str]):
+def _set_owner(owner: str, urns: list[str]):
     resource_urns = ", ".join([f'{{ resourceUrn: "{urn}" }}' for urn in urns])
     _input = f"{{ owners: [ {owner} ], resources: [ {resource_urns} ] }}"
     response = _post_mutation(endpoint="batchAddOwners", _input=_input)
@@ -593,7 +592,7 @@ def _set_owner(owner: str, urns: List[str]):
         raise ValueError(f"Setting table owners for {owner} failed! (but returned 200)")
 
 
-def remove_owners(owners: Iterable[str], urns: List[str]):
+def remove_owners(owners: Iterable[str], urns: list[str]):
     if isinstance(owners, str):
         owners = [owners]
     owner_urns = ", ".join(f'"{owner}"' for owner in owners)
@@ -637,7 +636,7 @@ def _change_tags(endpoint: str, tag_urns: Iterable[str], resource_urns: Iterable
 
 def _post_mutation(
     endpoint: str, _input: str, urn: str | None = None, subselection: str | None = None
-) -> Dict | None:
+) -> dict | None:
     _urn = f'urn: "{urn}", ' if urn else ""
     _subselection = f" {{ {subselection} }}" if subselection else ""
     body = {

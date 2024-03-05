@@ -12,14 +12,15 @@ To get the script to run, a user has to fill out two functions (clearly annotate
 * calculate_priority_tag: For a given dict, return a priority (e.g. P0, P1, P2)
 * assemble_priority_metadata: For a given dict, generate metadata that you would like to propagate to DataHub
 
-Author: Ada Draginda <ada[at]makenotion.com>
+Author: Ada Draginda
 Date: January 25, 2023
 """
+
 from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import click
 import datahub.emitter.mce_builder as builder
@@ -39,14 +40,14 @@ def _to_priority_urn(priority: str) -> str:
 
 
 # ----> REQUIRES EDITING
-def calculate_priority_tag(dbt_resource: Dict[str, Any]) -> str:
+def calculate_priority_tag(dbt_resource: dict[str, Any]) -> str:
     # insert logic for calculating a priority based on the metadata in the dbt resource
     priority = ...
     return builder.make_tag_urn(f"Priority: {priority}")
 
 
 # ----> REQUIRES EDITING
-def assemble_priority_metadata(dbt_resource: Dict[str, Any]) -> Dict[str, str]:
+def assemble_priority_metadata(dbt_resource: dict[str, Any]) -> dict[str, str]:
     """
     Given a dictionary for a given dbt resource (from manifest.json), calculate a
     priority. The return must be a valid URN (see _to_priority_urn which can create an
@@ -56,8 +57,8 @@ def assemble_priority_metadata(dbt_resource: Dict[str, Any]) -> Dict[str, str]:
 
 
 def _set_priority_tags(
-    add_tags: Dict[str, List[DHEntity]],
-    rem_tags: Dict[str, List[DHEntity]],
+    add_tags: dict[str, list[DHEntity]],
+    rem_tags: dict[str, list[DHEntity]],
     dry_run: bool,
 ):
     logger = logging.getLogger(__name__)
@@ -125,7 +126,7 @@ def propagate_dbt_priority_metadata(manifest_file: Path, dry_run: bool):  # noqa
         f"{v['database']}.{v['schema']}.{v['alias'] or v['name']}": v
         for v in dbt_resources_by_unique_id.values()
     }
-    entities: List[DHEntity] = get_datahub_entities()
+    entities: list[DHEntity] = get_datahub_entities()
 
     add_tags = {}
     rem_tags = {}

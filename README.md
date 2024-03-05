@@ -4,7 +4,7 @@ A python quasi-client (and tools) that interacts with DataHub GraphQL endpoints.
 
 ## Install
 
-Requires python >=3.7
+Requires python >=3.9
 
 ```bash
 pip install git+https://github.com/makenotion/datahub-tools
@@ -12,24 +12,25 @@ pip install git+https://github.com/makenotion/datahub-tools
 
 Three environment variables are required:
 
-* DATAHUB_GMS_URL - e.g. "https://your_business.acryl.io/gms"
-* DATAHUB_GRAPHQL_URL - e.g. "https://your_business.acryl.io/api/graphql"
-* DATAHUB_GMS_TOKEN - Access token generated from https://your_business.acryl.io/settings/tokens
+- DATAHUB_GMS_URL - e.g. "https://your_business.acryl.io/gms"
+- DATAHUB_GRAPHQL_URL - e.g. "https://your_business.acryl.io/api/graphql"
+- DATAHUB_GMS_TOKEN - Access token generated from https://your_business.acryl.io/settings/tokens
 
 ## Quick-Start
 
 Make sure you have your environment variables set (see above)
 
 _Sample some of your DataHub entities_
+
 ```python
-from typing import List
 from datahub_tools.client import get_datahub_entities
 from datahub_tools.classes import DHEntity
 
-entities: List[DHEntity] = get_datahub_entities(limit=5)
+entities: list[DHEntity] = get_datahub_entities(limit=5)
 ```
 
 _Take the first entity and apply some changes_
+
 ```python
 from datahub_tools.client import update_dataset_description, emit_metadata
 entity = entities[0]
@@ -59,12 +60,13 @@ but hopefully still helpful.
 The goals of the functions were to provide simple and easy programmatic access to common DataHub operations
 
 #### Features
-* emit metadata
-* fetch entities (datasets)
-* fetch datahub users
-* fetch datahub groups
-* remove/set user/group owners
-* remove/set tags
+
+- emit metadata
+- fetch entities (datasets)
+- fetch datahub users
+- fetch datahub groups
+- remove/set user/group owners
+- remove/set tags
 
 Users are encouraged to setup logging in advance as many steps and communications are logged to INFO.
 
@@ -74,7 +76,7 @@ Contributions are welcome, but please add tests for new code. Testing is setup u
 with tox:
 
 ```bash
-pyenv shell 3.7.16 3.8.16 3.9.16 3.10.9 3.11.1
+pyenv shell 3.9.16 3.10.9 3.11.1
 pip install -U pip setuptools tox
 tox
 pyenv shell -
@@ -91,4 +93,5 @@ The pre-commit hooks will run automatically upon a commit
 
 ### Contact/Author
 
-Written by [Ada Draginda](https://www.linkedin.com/in/adadraginda/) <ada[at]makenotion.com>
+Contact [Theo Wou](https://www.linkedin.com/in/theodore-wou-b7053b238/) <theodore[at]makenotion.com>
+Originally authored by [Ada Draginda](https://www.linkedin.com/in/adadraginda/)
