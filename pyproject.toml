@@ -5,9 +5,9 @@ build-backend = 'setuptools.build_meta'
 [project]
 name = 'datahub_tools'
 description = 'Python tools for working with DataHub'
-version = '2.1.2'
+version = '2.1.3'
 readme = 'README.md'
-requires-python = '>=3.7'
+requires-python = '>=3.9'
 dependencies = ['acryl-datahub>=0.10.3.2', 'jmespath', 'requests']
 
 [tool.setuptools]
@@ -15,7 +15,7 @@ include-package-data = false
 package-dir = { "" = "src" }
 
 [tool.black]
-target-version = ['py37']
+target-version = ['py39']
 include = '\.pyi?$'
 exclude = '''
 /(
@@ -34,13 +34,11 @@ exclude = '''
 [tool.tox]
 legacy_tox_ini = '''
 [tox]
-envlist = py37,py38,py39,py310,py311
+envlist = py39,py310,py311
 isolated_build = True
 
 [gh-actions]
 python =
-    3.7: py37
-    3.8: py38
     3.9: py39
     3.10: py310
     3.11: py311
@@ -79,4 +77,4 @@ exclude = [
 ]
 
 line-length = 110
-target-version = "py37"
+target-version = "py39"

@@ -5,19 +5,19 @@ build-backend = 'setuptools.build_meta'
 [project]
 name = 'metadata_transformers'
 description = 'Metadata propagation transformers'
-version = '0.1.0'
+version = '0.1.1'
 readme = 'README.md'
-requires-python = '>=3.7'
+requires-python = '>=3.9'
 dependencies = [
-    'acryl-datahub[dbt]',
-    'click',
-    'jmespath',
-    'datahub-tools@git+ssh://git@github.com/makenotion/datahub-tools'
+  'acryl-datahub[dbt]',
+  'click',
+  'jmespath',
+  'datahub-tools@git+ssh://git@github.com/makenotion/datahub-tools',
 ]
 
 [tool.setuptools]
 include-package-data = false
-package-dir = {"" = "src"}
+package-dir = { "" = "src" }
 
 [tool.isort]
 profile = 'black'

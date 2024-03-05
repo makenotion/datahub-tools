@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import Dict
 
 import datahub.emitter.mce_builder as builder
 from datahub.ingestion.transformer.add_dataset_properties import (

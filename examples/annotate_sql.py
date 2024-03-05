@@ -12,16 +12,16 @@ run with
 python annotate_sql --manifest_file /path/to/your/manifest.json
 ```
 
-Author: Ada Draginda <ada[at]makenotion.com>
+Author: Ada Draginda
 Date: January 25, 2023
 """
+
 from __future__ import annotations
 
 import logging
 import pathlib
 from logging.config import dictConfig
 from string import Template
-from typing import Dict, List
 
 import click
 from datahub_tools.utils import extract_dbt_resources
@@ -64,7 +64,7 @@ def setup_logging(level: int = logging.INFO):
     dictConfig(config)
 
 
-def config_to_str(config: Dict):
+def config_to_str(config: dict):
     all_str = []
     for k, v in config.items():
         if isinstance(v, dict):
@@ -107,7 +107,7 @@ def config_to_str(config: Dict):
     default=None,
     help="One or more resource_types can be included to filter dbt resources, e.g. 'model', 'snapshot', etc.",
 )
-def main(manifest_file: pathlib.Path, resource_type_filter: List[str] | None):
+def main(manifest_file: pathlib.Path, resource_type_filter: list[str] | None):
     """
     Insert a link to each model's DataHub page at the top of each SQL file
     """

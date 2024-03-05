@@ -1,5 +1,9 @@
 # Change Log
 
+### v2.1.3 - 2024-03-05 Theo Wou
+
+- PEP 585 Typing generics
+
 ### v2.1.2 - 2024-03-05 Theo Wou
 
 - Rename `_clean_string` to `_escape_quotes` and fix downstream graphql queries
