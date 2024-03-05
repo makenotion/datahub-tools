@@ -1,5 +1,9 @@
 # Change Log
 
+### v2.1.2 - 2024-03-05 Theo Wou
+
+- Rename `_clean_string` to `_escape_quotes` and fix downstream graphql queries
+
 ### v2.1.1 - 2023-09-20 Theo Wou
 
 - Fix extraneous braces in `get_datahub_entities`
