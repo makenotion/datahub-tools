@@ -481,7 +481,7 @@ def get_datahub_groups() -> list[dict[str, str]]:
 
 def _replace_match(match: re.Match) -> str:
     """
-    Replace a escape character match to be compatible with the query template
+    Replace an escaped character match to be compatible with the query template
     """
     _replace_map = {
         '"': '\\"',
@@ -493,12 +493,12 @@ def _replace_match(match: re.Match) -> str:
 
 def _escape_chars(_str: str) -> str:
     """
-    Convenience method to escape quotes within a string
+    Convenience method to handle escaped characters within a string
     For GraphQL queries this cannot be used within an f-string otherwise it will incorrectly escape the quotes
         e.g. f'"{_escape_chars('\"foo\"}"' will output '\\\"foo\\\"' instead of the desired '\\"foo\\"'
         instead use '"' + _escape_chars('\"foo\") + '"'
     """
-    # first replace backslashes with double backslashes
+    # first escape backslashes separately to prevent other characters from being double escaped
     _backslash_str = re.sub(r"\\(?!n|t)", r"\\\\", _str)
 
     pattern = r'(["\n\t])'
