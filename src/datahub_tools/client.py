@@ -479,14 +479,30 @@ def get_datahub_groups() -> list[dict[str, str]]:
     return users
 
 
-def _escape_quotes(_str: str) -> str:
+def _replace_match(match: re.Match) -> str:
     """
-    Convenience method to escape quotes within a string
+    Replace an escaped character match to be compatible with the query template
+    """
+    _replace_map = {
+        '"': '\\"',
+        "\n": "\\n",
+        "\t": "\\t",
+    }
+    return _replace_map.get(match.group(0))
+
+
+def _escape_chars(_str: str) -> str:
+    """
+    Convenience method to handle escaped characters within a string
     For GraphQL queries this cannot be used within an f-string otherwise it will incorrectly escape the quotes
-        e.g. f'"{_escape_quotes('\"foo\"}"' will output '\\\"foo\\\"' instead of the desired '\\"foo\\"'
-        instead use '"' + _escape_quotes('\"foo\" + '"'
+        e.g. f'"{_escape_chars('\"foo\"}"' will output '\\\"foo\\\"' instead of the desired '\\"foo\\"'
+        instead use '"' + _escape_chars('\"foo\") + '"'
     """
-    return re.sub(r'\\*"', '\\"', _str)
+    # first escape backslashes separately to prevent other characters from being double escaped
+    _backslash_str = re.sub(r"\\(?!n|t)", r"\\\\", _str)
+
+    pattern = r'(["\n\t])'
+    return re.sub(pattern, _replace_match, _backslash_str)
 
 
 def update_field_descriptions(
@@ -502,7 +518,7 @@ def update_field_descriptions(
     responses = {}
     for k, v in field_descriptions.items():
         _input = (
-            '{ description: "' + _escape_quotes(v) + '", '
+            '{ description: "' + _escape_chars(v) + '", '
             f'resourceUrn: "{resource_urn}", '
             f"subResourceType: DATASET_FIELD, "
             f'subResource: "{k}" }}'
@@ -528,7 +544,7 @@ def update_dataset_description(resource_urn: str, description: str) -> dict[str,
     :return: Resource URN changed
     """
     _input = (
-        '{ editableProperties: { description: "' + _escape_quotes(description) + '" } }'
+        '{ editableProperties: { description: "' + _escape_chars(description) + '" } }'
     )
     endpoint = "updateDataset"
     response = _post_mutation(
@@ -555,7 +571,7 @@ def update_institutional_memory(
     """
     element = (
         f'{{ url: "{url}", '
-        'description: "' + _escape_quotes(description) + '", '
+        'description: "' + _escape_chars(description) + '", '
         f'author: "{author_urn}", createdAt: {created_at} }}'
     )
     _input = f"{{ institutionalMemory: {{ elements: [{element}] }} }}"
