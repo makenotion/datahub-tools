@@ -481,7 +481,7 @@ def get_datahub_groups() -> list[dict[str, str]]:
 
 def _replace_match(match: re.Match) -> str:
     """
-    Replace a escape character match with the replacement for the query template
+    Replace a escape character match to be compatible with the query template
     """
     _replace_map = {
         '"': '\\"',
