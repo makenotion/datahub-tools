@@ -1,5 +1,9 @@
 # Change Log
 
+### v2.1.4 - 2024-03-05 Theo Wou
+
+- Support tab, new-line and backslash in escaped characters
+
 ### v2.1.3 - 2024-03-05 Theo Wou
 
 - PEP 585 Typing generics
