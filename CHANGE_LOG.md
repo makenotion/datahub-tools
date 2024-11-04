@@ -1,5 +1,9 @@
 # Change Log
 
+### v2.2.0 - 2024-11-04 Theo Wou
+
+- Add assign role to multiple users, up linter versions
+
 ### v2.1.4 - 2024-03-05 Theo Wou
 
 - Support tab, new-line and backslash in escaped characters
