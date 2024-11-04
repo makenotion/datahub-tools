@@ -621,6 +621,17 @@ def remove_owners(owners: Iterable[str], urns: list[str]):
         )
 
 
+def assign_role_to_users(role_urn: str, urns: list[str]):
+    _role_urn = f'"{role_urn}"'
+    user_urns = ", ".join(f'"{user}"' for user in urns)
+    _input = f"{{ roleUrn: {_role_urn}, actors: [ {user_urns} ] }}"
+    response = _post_mutation(endpoint="batchAssignRole", _input=_input)
+    if not response:
+        raise ValueError(
+            f"Setting role {role_urn} to users {user_urns} failed! (but returned 200)"
+        )
+
+
 def set_tags(tag_urns: Iterable[str], resource_urns: Iterable[str]):
     _change_tags(
         endpoint="batchAddTags", tag_urns=tag_urns, resource_urns=resource_urns
