@@ -93,5 +93,5 @@ The pre-commit hooks will run automatically upon a commit
 
 ### Contact/Author
 
-Contact [Theo Wou](https://www.linkedin.com/in/theodore-wou-b7053b238/) <theodore[at]makenotion.com>
+Contact [Evelyn Wou](https://www.linkedin.com/in/evelyn-wou-b7053b238/) <evelyn[at]makenotion.com>
 Originally authored by [Ada Draginda](https://www.linkedin.com/in/adadraginda/)
