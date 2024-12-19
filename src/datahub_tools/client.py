@@ -517,22 +517,27 @@ def update_field_descriptions(
     """
     responses = {}
     for k, v in field_descriptions.items():
-        _input = (
-            '{ description: "' + _escape_chars(v) + '", '
-            f'resourceUrn: "{resource_urn}", '
-            f"subResourceType: DATASET_FIELD, "
-            f'subResource: "{k}" }}'
-        )
-        endpoint = "updateDescription"
-        response = _post_mutation(
-            endpoint=endpoint,
-            _input=_input,
-        )
-        if not response:
-            raise ValueError(
-                f"Failed to update field description '{k}' (but returned 200) for {resource_urn}"
+        emitter = emitter = get_dh_emitter()
+        exists = emitter.get_aspect(resource_urn)
+        if exists:
+            _input = (
+                '{ description: "' + _escape_chars(v) + '", '
+                f'resourceUrn: "{resource_urn}", '
+                f"subResourceType: DATASET_FIELD, "
+                f'subResource: "{k}" }}'
             )
-        responses[k] = response[endpoint]
+            endpoint = "updateDescription"
+            response = _post_mutation(
+                endpoint=endpoint,
+                _input=_input,
+            )
+            if not response:
+                raise ValueError(
+                    f"Failed to update field description '{k}' (but returned 200) for {resource_urn}"
+                )
+            responses[k] = response[endpoint]
+        else:
+            raise ValueError(f"Failed to get entity {resource_urn}: Does not exist")
     return responses
 
 
@@ -543,17 +548,25 @@ def update_dataset_description(resource_urn: str, description: str) -> dict[str,
     :param description: The description that you want to set for the dataset/resource
     :return: Resource URN changed
     """
-    _input = (
-        '{ editableProperties: { description: "' + _escape_chars(description) + '" } }'
-    )
-    endpoint = "updateDataset"
-    response = _post_mutation(
-        endpoint=endpoint, _input=_input, urn=resource_urn, subselection="urn"
-    )
-    if not response:
-        raise ValueError(
-            f"Failed to update entity descriptions (but returned 200) for {resource_urn}"
+    emitter = emitter = get_dh_emitter()
+    exists = emitter.get_aspect(resource_urn)
+    responses = {}
+    if exists:
+        _input = (
+            '{ editableProperties: { description: "'
+            + _escape_chars(description)
+            + '" } }'
         )
+        endpoint = "updateDataset"
+        response = _post_mutation(
+            endpoint=endpoint, _input=_input, urn=resource_urn, subselection="urn"
+        )
+        if not response:
+            raise ValueError(
+                f"Failed to update entity descriptions (but returned 200) for {resource_urn}"
+            )
+    else:
+        raise ValueError(f"Failed to get entity {resource_urn}: Does not exist")
     return response[endpoint]
 
 
