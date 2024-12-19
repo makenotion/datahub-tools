@@ -5,7 +5,7 @@ build-backend = 'setuptools.build_meta'
 [project]
 name = 'datahub_tools'
 description = 'Python tools for working with DataHub'
-version = '2.2.0'
+version = '2.2.1'
 readme = 'README.md'
 requires-python = '>=3.9'
 dependencies = ['acryl-datahub>=0.10.3.2', 'jmespath', 'requests']

@@ -1,5 +1,9 @@
 # Change Log
 
+### v2.2.1 - 2024-12-19 Peter Ray
+
+- Add check before updating datasets/descriptions
+
 ### v2.2.0 - 2024-11-04 Theo Wou
 
 - Add assign role to multiple users, up linter versions
