@@ -574,8 +574,6 @@ def update_dataset_description(resource_urn: str, description: str) -> dict[str,
         raise ValueError(
             f"Failed to update entity descriptions (but returned 200) for {resource_urn}"
         )
-    else:
-        raise ValueError(f"Failed to get entity {resource_urn}: Does not exist")
     return response[endpoint]
 
 
