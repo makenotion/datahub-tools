@@ -429,15 +429,15 @@ def get_datahub_users() -> list[dict[str, str]]:
                 }) {
                     relationships {
                         entity {
-                        ...on CorpGroup {
-                          urn
-                          type
-                          properties { displayName }
-                          editableProperties {
-                              email
-                              slack
+                          ...on CorpGroup {
+                            urn
+                            type
+                            properties { displayName }
+                            editableProperties {
+                                email
+                                slack
+                            }
                           }
-                      }
                         }
                     }
                 }
