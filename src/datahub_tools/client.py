@@ -120,6 +120,11 @@ def emit_metadata(
     emitter.emit(metadata_event)
 
 
+def entity_exists(resource_urn: str) -> bool:
+    response = datahub_post(endpoint="entityExists", urn=resource_urn)
+    return response
+
+
 def get_datahub_entities(
     start: int = 0,
     limit: int | None = None,
@@ -397,6 +402,18 @@ def get_datahub_users() -> list[dict[str, str]]:
     """
     :return: list of datahub users and their metadata (including urn)
     """
+    _corp_group = """
+    ...on CorpGroup {
+        urn
+        type
+        properties { displayName }
+        editableProperties {
+            email
+            slack
+        }
+    }
+    """
+
     qry = """
     {
         listUsers(input: { query: "*", start: 0, count: 10000 }) {
@@ -421,6 +438,26 @@ def get_datahub_users() -> list[dict[str, str]]:
                 }
                 status
                 isNativeUser
+                relationships(input: {
+                    types: ["IsMemberOfNativeGroup"],
+                    direction: OUTGOING,
+                    start: 0,
+                    count: 1000
+                }) {
+                    relationships {
+                        entity {
+                        ...on CorpGroup {
+                          urn
+                          type
+                          properties { displayName }
+                          editableProperties {
+                              email
+                              slack
+                          }
+                      }
+                        }
+                    }
+                }
             }
         }
     }
@@ -517,22 +554,27 @@ def update_field_descriptions(
     """
     responses = {}
     for k, v in field_descriptions.items():
-        _input = (
-            '{ description: "' + _escape_chars(v) + '", '
-            f'resourceUrn: "{resource_urn}", '
-            f"subResourceType: DATASET_FIELD, "
-            f'subResource: "{k}" }}'
-        )
-        endpoint = "updateDescription"
-        response = _post_mutation(
-            endpoint=endpoint,
-            _input=_input,
-        )
-        if not response:
-            raise ValueError(
-                f"Failed to update field description '{k}' (but returned 200) for {resource_urn}"
+        emitter = emitter = get_dh_emitter()
+        exists = emitter.exists(resource_urn)
+        if exists:
+            _input = (
+                '{ description: "' + _escape_chars(v) + '", '
+                f'resourceUrn: "{resource_urn}", '
+                f"subResourceType: DATASET_FIELD, "
+                f'subResource: "{k}" }}'
             )
-        responses[k] = response[endpoint]
+            endpoint = "updateDescription"
+            response = _post_mutation(
+                endpoint=endpoint,
+                _input=_input,
+            )
+            if not response:
+                raise ValueError(
+                    f"Failed to update field description '{k}' (but returned 200) for {resource_urn}"
+                )
+            responses[k] = response[endpoint]
+        else:
+            raise ValueError(f"Failed to get entity {resource_urn}: Does not exist")
     return responses
 
 
@@ -543,17 +585,24 @@ def update_dataset_description(resource_urn: str, description: str) -> dict[str,
     :param description: The description that you want to set for the dataset/resource
     :return: Resource URN changed
     """
-    _input = (
-        '{ editableProperties: { description: "' + _escape_chars(description) + '" } }'
-    )
-    endpoint = "updateDataset"
-    response = _post_mutation(
-        endpoint=endpoint, _input=_input, urn=resource_urn, subselection="urn"
-    )
-    if not response:
-        raise ValueError(
-            f"Failed to update entity descriptions (but returned 200) for {resource_urn}"
+    emitter = emitter = get_dh_emitter()
+    exists = emitter.exists(resource_urn)
+    if exists:
+        _input = (
+            '{ editableProperties: { description: "'
+            + _escape_chars(description)
+            + '" } }'
         )
+        endpoint = "updateDataset"
+        response = _post_mutation(
+            endpoint=endpoint, _input=_input, urn=resource_urn, subselection="urn"
+        )
+        if not response:
+            raise ValueError(
+                f"Failed to update entity descriptions (but returned 200) for {resource_urn}"
+            )
+    else:
+        raise ValueError(f"Failed to get entity {resource_urn}: Does not exist")
     return response[endpoint]
 
 
