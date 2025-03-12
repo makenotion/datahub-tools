@@ -1,5 +1,9 @@
 # Change Log
 
+### v2.2.1 - 2025-03-12 Peter Ray
+
+- Add group info to get users function
+
 ### v2.2.0 - 2024-11-04 Theo Wou
 
 - Add assign role to multiple users, up linter versions
