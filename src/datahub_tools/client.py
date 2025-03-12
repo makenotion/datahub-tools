@@ -120,11 +120,6 @@ def emit_metadata(
     emitter.emit(metadata_event)
 
 
-def entity_exists(resource_urn: str) -> bool:
-    response = datahub_post(endpoint="entityExists", urn=resource_urn)
-    return response
-
-
 def get_datahub_entities(
     start: int = 0,
     limit: int | None = None,
@@ -401,17 +396,6 @@ def get_glossary_terms() -> list[dict]:
 def get_datahub_users() -> list[dict[str, str]]:
     """
     :return: list of datahub users and their metadata (including urn)
-    """
-    _corp_group = """
-    ...on CorpGroup {
-        urn
-        type
-        properties { displayName }
-        editableProperties {
-            email
-            slack
-        }
-    }
     """
 
     qry = """
