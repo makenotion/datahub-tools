@@ -90,8 +90,3 @@ pre-commit install
 ```
 
 The pre-commit hooks will run automatically upon a commit
-
-### Contact/Author
-
-Contact [Evelyn Wou](https://www.linkedin.com/in/evelyn-wou-b7053b238/) <evelyn[at]makenotion.com>
-Originally authored by [Ada Draginda](https://www.linkedin.com/in/adadraginda/)
