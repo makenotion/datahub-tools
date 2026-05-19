@@ -1,5 +1,16 @@
 # Change Log
 
+### v2.3.0 - 2026-05-19 Evelyn Wou
+
+- `get_datahub_entities` now accepts an optional `filters` argument (a list of
+  GraphQL `FacetFilterInput` dicts) so callers can narrow the underlying search.
+  This is the recommended way to avoid OpenSearch's `index.max_result_window`
+  cap (typically 10,000) when more than ~10k datasets exist. Cannot be combined
+  with `resource_urns`.
+- The `DataFetchingException` short-circuit in `get_datahub_entities` now logs a
+  warning before breaking out of the loop. Previously this branch silently
+  truncated results when the result-window cap was hit.
+
 ### v2.2.1 - 2025-03-12 Peter Ray
 
 - Add group info to get users function

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import functools
+import json
 import logging
 import os
 import re
@@ -120,12 +121,31 @@ def emit_metadata(
     emitter.emit(metadata_event)
 
 
-def get_datahub_entities(
+def _format_facet_filters(filters: list[dict[str, str]]) -> str:
+    """
+    Render a list of FacetFilterInput dicts as a GraphQL inline argument value.
+
+    ``[{"field": "platform", "value": "urn:li:dataPlatform:dbt"}]``
+    becomes
+    ``[{field: "platform", value: "urn:li:dataPlatform:dbt"}]``
+
+    Field names are emitted unquoted (GraphQL identifiers); values are emitted
+    as JSON-escaped string literals.
+    """
+    rendered = []
+    for f in filters:
+        parts = ", ".join(f"{k}: {json.dumps(v)}" for k, v in f.items())
+        rendered.append(f"{{{parts}}}")
+    return f"[{', '.join(rendered)}]"
+
+
+def get_datahub_entities(  # noqa: C901
     start: int = 0,
     limit: int | None = None,
     with_schema: bool = False,
     chunk_size: int | None = None,
     resource_urns: list[str] | None = None,
+    filters: list[dict[str, str]] | None = None,
 ) -> list[DHEntity]:
     """
     :param start: Index of the first record to return
@@ -136,9 +156,20 @@ def get_datahub_entities(
     :param chunk_size: If provided, the entities will be retrieved in chunks of this
       size.
     :param resource_urns: Optional list of dataset resource_urns
+    :param filters: Optional list of DataHub ``FacetFilterInput`` dicts applied to
+      the underlying search call, e.g.
+      ``[{"field": "platform", "value": "urn:li:dataPlatform:dbt"}]``. Each dict
+      is passed through to GraphQL as-is. Useful for narrowing very large result
+      sets that would otherwise hit OpenSearch's ``index.max_result_window`` cap
+      (typically 10,000) on unfiltered searches. Cannot be combined with
+      ``resource_urns``.
     :return: dictionary of snowflake name (e.g. prep.core.calendar) to DataHub urn
       e.g. urn:li:dataset:(urn:li:dataPlatform:snowflake,prep.core.calendar,PROD)
     """
+    if filters and resource_urns:
+        raise ValueError("`filters` cannot be combined with `resource_urns`")
+
+    filters_clause = f", filters: {_format_facet_filters(filters)}" if filters else ""
     # reuse the same set of vars for fields (editable and non-editable fields)
     field_vars = dedent(
         """
@@ -257,7 +288,7 @@ def get_datahub_entities(
             query_body = Template(
                 """
                 {
-                    search(input: {type: DATASET, query: "*", start: $start, count: $limit}){
+                    search(input: {type: DATASET, query: "*", start: $start, count: $limit$filters_clause}){
                         start
                         count
                         searchResults {
@@ -266,7 +297,12 @@ def get_datahub_entities(
                     }
                 }
                 """
-            ).substitute(start=_start, limit=_chunk_size, query_fields=query_fields)
+            ).substitute(
+                start=_start,
+                limit=_chunk_size,
+                query_fields=query_fields,
+                filters_clause=filters_clause,
+            )
 
         body = {"query": query_body, "variables": {}}
 
@@ -282,6 +318,15 @@ def get_datahub_entities(
                     "errors[0].extensions.classification", e.args[0]
                 )
                 if error_classification == "DataFetchingException":
+                    logging.getLogger(__name__).warning(
+                        "Stopping iteration at start=%s: DataHub returned DataFetchingException. "
+                        "This commonly indicates OpenSearch's index.max_result_window has been "
+                        "exceeded; consider narrowing the search via `filters`. Returning the "
+                        "%s entities collected so far. Error: %s",
+                        _start,
+                        len(out),
+                        e.args[0],
+                    )
                     break
                 else:
                     raise e
