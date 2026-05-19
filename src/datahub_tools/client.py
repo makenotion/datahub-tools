@@ -135,8 +135,8 @@ def _format_facet_filters(filters: list[dict[str, str]]) -> str:
     rendered = []
     for f in filters:
         parts = ", ".join(f"{k}: {json.dumps(v)}" for k, v in f.items())
-        rendered.append("{" + parts + "}")
-    return "[" + ", ".join(rendered) + "]"
+        rendered.append(f"{{{parts}}}")
+    return f"[{', '.join(rendered)}]"
 
 
 def get_datahub_entities(  # noqa: C901
